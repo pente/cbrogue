@@ -1,5 +1,6 @@
 bin/brogue
 bin/BrogueHighScores.txt
+bin/svg
 src/libtcod-1.5.2
 src/libtcod-1.5.2-32.tar.gz
 
