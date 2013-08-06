@@ -30,7 +30,8 @@ Updating your development environment
 
 Contributing edits
 ------------------
-* You will first require permission to upload changes to the public repository
+* Create a github account and set up your user name and email.
+* Get permission for your github account to make edits to the public repository.
 * After you have made some edits to the code and tested thoroughly that your
     new code works, commit your changes to git:
         
