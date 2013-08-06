@@ -55,7 +55,6 @@ Contributing edits
 
 How to compile
 --------------
-* (TODO)
 * Certain dependencies are required to be installed on your system to compile
     brogue. Check that you have installed `gcc` and the `rsvg`, `sdl-ttf` and
     `sdl` libraries. The packages you need on a Debian-style system are called:
@@ -63,7 +62,8 @@ How to compile
         librsvg2-dev
         libsdl-ttf2.0-dev
         libsdl1.2-dev
+* Once you have te requisite dependencies, run `make`.
 
 How to run
 ----------
-* (TODO)
+* Run `./brogue`.

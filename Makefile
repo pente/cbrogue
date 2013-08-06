@@ -7,7 +7,10 @@ ifneq ($(filter %86,${MACHINE_NAME}),)
 	# For x86, we will set the machine type to enable MMX
 	# (It is enabled by default for x86_64, so we don't need to 
 	# do anything special there.)
-	PLATFORM_CFLAGS = -mpentium-mmx
+	
+	# This does not work for me (gcc does not recognize the parameter). Eh.... -pente
+	# PLATFORM_CFLAGS = -mpentium-mmx
+	PLATFORM_CFLAGS =
 else
 	PLATFORM_CFLAGS = 
 endif
