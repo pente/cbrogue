@@ -1,7 +1,7 @@
 cbrogue
 =======
 
-Community Brogue
+Community Brogue (tcod-based version)
 
 How to set up the development environment
 -----------------------------------------
@@ -12,13 +12,13 @@ How to set up the development environment
         cd cbrogue
         git init
         git remote add origin https://github.com/pente/cbrogue.git
-        git pull origin master
+        git pull origin tcod
 
 Updating your development environment
 -------------------------------------
 * To update to the newest version of the code:
 
-        git pull origin master
+        git pull origin tcod
 
 * To checkout a specific version of the code to your working tree:
 
@@ -26,7 +26,7 @@ Updating your development environment
 
 * To restore your working tree to the newest version:
 
-        git checkout master
+        git checkout tcod
 
 Contributing edits
 ------------------
@@ -41,7 +41,7 @@ Contributing edits
     not have the latest version, git will automatically merge your code with the
     latest code. Be sure to test the code after performing any merges.
 
-        git pull origin master
+        git pull origin tcod
 
 * If the merge resulted in a merge conflict, you will have to resolve the
     conflict by hand and then commit your changes (after testing):
@@ -50,20 +50,24 @@ Contributing edits
 
 * Finally you can push your changes to the public repository:
 
-        git push origin master
+        git push origin tcod
 
 
 How to compile
 --------------
-* (TODO)
-* Certain dependencies are required to be installed on your system to compile
-    brogue. Check that you have installed `gcc` and the `rsvg`, `sdl-ttf` and
-    `sdl` libraries. The packages you need on a Debian-style system are called:
+* The first time you compile Brogue, you must do the following to obtain the
+    tcod development library:
 
-        librsvg2-dev
-        libsdl-ttf2.0-dev
-        libsdl1.2-dev
+        cd src
+        ./get-libtcod.sh
+        cd ..
+
+* Then every time you need to compile Brogue, execute:
+
+        make
+
+* (TODO: dependencies)
 
 How to run
 ----------
-* (TODO)
+* Run `./brogue`
