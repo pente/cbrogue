@@ -1,20 +1,6 @@
 #include "platform.h"
 
-#ifdef BROGUE_TCOD
-#include "libtcod.h"
-TCOD_renderer_t renderer = TCOD_RENDERER_SDL; // the sdl renderer is more reliable than the opengl renderer
-short brogueFontSize = -1;
-#endif
-
-#ifdef BROGUE_TCOD
-# ifdef BROGUE_CURSES
-#  define BROGUE_TARGET_STRING "both"
-# else
-#  define BROGUE_TARGET_STRING "tcod"
-# endif
-#else
-# define BROGUE_TARGET_STRING "curses"
-#endif
+#define BROGUE_TARGET_STRING "sdl"
 
 extern playerCharacter rogue;
 struct brogueConsole currentConsole;
@@ -22,6 +8,7 @@ struct brogueConsole currentConsole;
 boolean serverMode = false;
 boolean noMenu = false;
 unsigned long int firstSeed = 0;
+short brogueFontSize = -1;
 
 void dumpScores();
 
@@ -48,8 +35,8 @@ static void printCommandlineHelp() {
 	"-s seed                    start a new game with the specified numerical seed\n"
 	"-o filename[.broguesave]   open a save file (extension optional)\n"
 	"-v recording[.broguerec]   view a recording (extension optional)\n"
+	"--size N                   starts the game at font size N\n"
 #ifdef BROGUE_TCOD
-	"--size N                   starts the game at font size N (1 to 13)\n"
 	"--noteye-hack              ignore SDL-specific application state checks\n"
 #endif
 	"--no-menu      -M          never display the menu (automatically pick new game)\n"
@@ -69,12 +56,16 @@ static void badArgument(const char *arg) {
 	printCommandlineHelp();
 }
 
-int main(int argc, char *argv[])
-{
-#ifdef BROGUE_TCOD
-		currentConsole = tcodConsole;
+#ifdef __APPLE__
+int SDL_main(int argc, char *argv[])
 #else
-		currentConsole = cursesConsole;
+int main(int argc, char *argv[])
+#endif
+{
+#ifdef BROGUE_SDL
+	currentConsole = sdlConsole;
+#else
+	currentConsole = cursesConsole;
 #endif
 
 	rogue.nextGame = NG_NOTHING;
@@ -167,17 +158,12 @@ int main(int argc, char *argv[])
 			return 0;
 		}
 
-#ifdef BROGUE_TCOD
+#ifdef BROGUE_SDL
 		if (strcmp(argv[i], "--SDL") == 0) {
-			renderer = TCOD_RENDERER_SDL;
-			currentConsole = tcodConsole;
+			currentConsole = sdlConsole;
 			continue;
 		}
-		if (strcmp(argv[i], "--opengl") == 0 || strcmp(argv[i], "-gl") == 0) {
-			renderer = TCOD_RENDERER_OPENGL;
-			currentConsole = tcodConsole;
-			continue;
-		}
+#endif
 		if (strcmp(argv[i], "--size") == 0) {
 			// pick a font size
 			int size = atoi(argv[i + 1]);
@@ -187,7 +173,6 @@ int main(int argc, char *argv[])
 				continue;
 			}
 		}
-#endif
 #ifdef BROGUE_CURSES
 		if (strcmp(argv[i], "--term") == 0 || strcmp(argv[i], "-t") == 0) {
 			currentConsole = cursesConsole;

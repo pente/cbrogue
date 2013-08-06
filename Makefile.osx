@@ -1,0 +1,100 @@
+OSX_SDL_URL = http://www.libsdl.org/release/SDL-1.2.15.dmg
+OSX_SDL_TTF_URL = http://www.libsdl.org/projects/SDL_ttf/release/SDL_ttf-2.0.11.dmg
+OSX_GTK_SETUP_URL = https://git.gnome.org/browse/gtk-osx/plain/gtk-osx-build-setup.sh
+
+APPSVG = $(SRCSVG:%=Brogue.app/Contents/Resources/%)
+APPINFO = Brogue.app/Contents/Info.plist
+APPFONT = Brogue.app/Contents/Resources/Andale_Mono.ttf
+APPICON = Brogue.app/Contents/Resources/Brogue.icns
+APPEXE = Brogue.app/Contents/MacOS/brogue
+SDL_FRAMEWORK = Brogue.app/Contents/Frameworks/SDL.framework
+SDL_TTF_FRAMEWORK = Brogue.app/Contents/Frameworks/SDL_ttf.framework
+
+OSXDIST = \
+	Brogue.app \
+	$(wildcard *.rtf) \
+	$(wildcard *.txt)
+
+.PHONY: osx-build
+
+osx: osx-build Brogue.app ${APPSVG} ${APPFONT} ${APPINFO} ${APPICON} ${SDL_FRAMEWORK} ${SDL_TTF_FRAMEWORK}
+
+osx-build: osx-build-dir osx-build/SDL.framework osx-build/SDL_ttf.framework osx-build/gtk
+
+osxdist_ssh: ${TARFILE}
+ifeq (${OSX_BUILD_HOST},)
+	@echo OSX_BUILD_HOST must be set for remote OS X builds
+	@false
+endif
+	scp ${TARFILE} osx-ssh-build.sh ${OSX_BUILD_HOST}:/tmp
+	ssh ${OSX_BUILD_HOST} /tmp/osx-ssh-build.sh ${RELEASENAME}
+	scp ${OSX_BUILD_HOST}:/tmp/${RELEASENAME}/${DMGFILE} dist
+
+osxdist_ssh_clean:
+ifeq (${OSX_BUILD_HOST},)
+	true
+else
+	ssh ${OSX_BUILD_HOST} rm -fr /tmp/osx-ssh-build.sh /tmp/${RELEASENAME} /tmp/${RELEASENAME}-source.tar.gz
+endif
+
+osxdist: ${DMGFILE}
+
+${DMGFILE}: osx
+	    rm -fr osx ${DMGFILE}
+	    mkdir -p osx
+	    cp -a ${OSXDIST} osx
+	    mkdir -p dist
+	    hdiutil create ${DMGFILE} -volname ${RELEASENAME} -srcfolder osx -format UDZO
+
+osx-build-dir:
+	mkdir -p osx-build
+
+osx-build/SDL.framework:
+	mkdir -p osx-build/tmp
+	curl ${OSX_SDL_URL} -o osx-build/SDL.dmg
+	hdiutil attach osx-build/SDL.dmg -mountroot osx-build/tmp
+	cp -a osx-build/tmp/SDL/SDL.framework osx-build
+	hdiutil detach osx-build/tmp/SDL
+
+osx-build/SDL_ttf.framework:
+	mkdir -p osx-build/tmp
+	curl ${OSX_SDL_TTF_URL} -o osx-build/SDL_ttf.dmg
+	hdiutil attach osx-build/SDL_ttf.dmg -mountroot osx-build/tmp
+	cp -a osx-build/tmp/SDL_ttf/SDL_ttf.framework osx-build
+	hdiutil detach osx-build/tmp/SDL_ttf
+
+osx-build/gtk:
+	rm -f ~/.jhbuildrc-custom
+	curl ${OSX_GTK_SETUP_URL} -o osx-build/gtk-osx-build-setup.sh
+	sh osx-build/gtk-osx-build-setup.sh
+	echo prefix=\'${PWD}/osx-build/gtk\' >>~/.jhbuildrc-custom
+	echo checkoutroot=\'${PWD}/osx-build\' >>~/.jhbuildrc-custom
+	~/.local/bin/jhbuild bootstrap
+	~/.local/bin/jhbuild build meta-gtk-osx-bootstrap
+	~/.local/bin/jhbuild build meta-gtk-osx-core
+	~/.local/bin/jhbuild build librsvg
+
+Brogue.app: bin/brogue 
+	mkdir -p Brogue.app/Contents/MacOS
+	mkdir -p Brogue.app/Contents/Resources/svg
+	mkdir -p Brogue.app/Contents/Frameworks
+	cp bin/brogue Brogue.app/Contents/MacOS
+	./package-dylibs.py --libpath ${PWD}/osx-build/gtk/lib ${APPEXE}
+
+Brogue.app/Contents/Resources/svg/%.svg: svg/%.svg Brogue.app
+	cp $< $@
+
+Brogue.app/Contents/Resources/Andale_Mono.ttf: res/Andale_Mono.ttf Brogue.app
+	cp $< $@
+
+Brogue.app/Contents/Info.plist: res/Info.plist Brogue.app
+	cp $< $@
+
+Brogue.app/Contents/Resources/Brogue.icns: res/Brogue.icns Brogue.app
+	cp $< $@
+
+${SDL_FRAMEWORK}: Brogue.app
+	cp -a osx-build/SDL.framework $@
+
+${SDL_TTF_FRAMEWORK}: Brogue.app
+	cp -a osx-build/SDL_ttf.framework $@

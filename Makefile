@@ -1,111 +1,152 @@
+RELEASENAME = brogue-1.7.2-svg2
 
-SDL_FLAGS = `sdl-config --cflags` `sdl-config --libs`
-LIBTCODDIR=src/libtcod-1.5.2
-CFLAGS=-Isrc/brogue -Isrc/platform -Wall -Wno-parentheses ${DEFINES}
-RELEASENAME=brogue-1.7.2
-LASTTARGET := $(shell ./brogue --target)
-CC ?= gcc
+MACHINE_NAME = $(shell uname -m)
+SYSTEM_NAME = $(shell uname -s)
 
-ifeq (${LASTTARGET},both)
-all : both
-else ifeq (${LASTTARGET},curses)
-all : curses
-else ifeq (${LASTTARGET},tcod)
-all : tcod
+ifneq ($(filter %86,${MACHINE_NAME}),)
+	# For x86, we will set the machine type to enable MMX
+	# (It is enabled by default for x86_64, so we don't need to 
+	# do anything special there.)
+	PLATFORM_CFLAGS = -mpentium-mmx
 else
-all : both
+	PLATFORM_CFLAGS = 
 endif
 
-%.o : %.c Makefile src/brogue/Rogue.h src/brogue/IncludeGlobals.h
-	$(CC) $(CFLAGS) -g -o $@ -c $< 
+BASE_CFLAGS = -O2 -g -Isrc/brogue -Isrc/platform 
 
-BROGUEFILES=src/brogue/Architect.o \
-	src/brogue/Combat.o \
-	src/brogue/Dijkstra.o \
-	src/brogue/Globals.o \
-	src/brogue/IO.o \
-	src/brogue/Items.o \
-	src/brogue/Light.o \
-	src/brogue/Monsters.o \
-	src/brogue/Buttons.o \
-	src/brogue/Movement.o \
-	src/brogue/Recordings.o \
-	src/brogue/RogueMain.o \
-	src/brogue/Random.o \
-	src/brogue/MainMenu.o \
-	src/brogue/Grid.o \
-	src/platform/main.o \
-	src/platform/platformdependent.o \
-	src/platform/curses-platform.o \
-	src/platform/tcod-platform.o \
-	src/platform/term.o
-
-TCOD_DEF = -DBROGUE_TCOD -I$(LIBTCODDIR)/include
-TCOD_DEP = ${LIBTCODDIR}
-TCOD_LIB = -L. -L${LIBTCODDIR} ${SDL_FLAGS} -ltcod -Wl,-rpath,.
-
-CURSES_DEF = -DBROGUE_CURSES
-CURSES_LIB = -lncurses -lm
-
-
-tcod : DEPENDENCIES += ${TCOD_DEP}
-tcod : DEFINES += ${TCOD_DEF}
-tcod : LIBRARIES += ${TCOD_LIB}
-
-curses : DEFINES = ${CURSES_DEF}
-curses : LIBRARIES = ${CURSES_LIB}
-
-both : DEPENDENCIES += ${TCOD_DEP}
-both : DEFINES += ${TCOD_DEF} ${CURSES_DEF}
-both : LIBRARIES += ${TCOD_LIB} ${CURSES_LIB}
-
-ifeq (${LASTTARGET},both)
-both : bin/brogue
-tcod : clean bin/brogue
-curses : clean bin/brogue
-else ifeq (${LASTTARGET},curses)
-curses : bin/brogue
-tcod : clean bin/brogue
-both : clean bin/brogue
-else ifeq (${LASTTARGET},tcod)
-tcod : bin/brogue
-curses : clean bin/brogue
-both : clean bin/brogue
+ifeq (${SYSTEM_NAME},Darwin)
+	FRAMEWORK_FLAGS = \
+		-framework SDL \
+		-framework SDL_ttf \
+		-framework Cocoa
+	SDL_CFLAGS = -DBROGUE_SDL -F osx-build
+	SDL_LIB = -F osx-build ${FRAMEWORK_FLAGS} -Wl,-rpath,@executable_path/../Frameworks
+	PKG_CONFIG = osx-build/gtk/bin/pkg-config
+	OBJC_SOURCE = src/platform/SDLMain.m
 else
-both : bin/brogue
-curses : bin/brogue
-tcod : bin/brogue
+	SDL_CFLAGS = -DBROGUE_SDL
+	SDL_LIB = -lSDL -lSDL_ttf
+	PKG_CONFIG = pkg-config
+	OBJC_SOURCE = 
 endif
 
-.PHONY : clean both curses tcod tar
+RSVG_CFLAGS = $(shell ${PKG_CONFIG} --cflags librsvg-2.0 cairo)
+RSVG_LIB = $(shell ${PKG_CONFIG} --libs librsvg-2.0 cairo)
 
-bin/brogue : ${DEPENDENCIES} ${BROGUEFILES}
-	$(CC) -O2 -march=i586 -o bin/brogue ${BROGUEFILES} ${LIBRARIES} -Wl,-rpath,.
+CFLAGS = \
+	${BASE_CFLAGS} ${PLATFORM_CFLAGS} \
+	-Wall -Wno-parentheses \
+	${SDL_CFLAGS} ${RSVG_CFLAGS}
+LDFLAGS = ${SDL_LIB} ${RSVG_LIB}
 
-clean : 
-	rm -f src/brogue/*.o src/platform/*.o bin/brogue
+TARFLAGS = --transform 's,^,${RELEASENAME}/,'
+TARFILE = dist/${RELEASENAME}-source.tar.gz
+ZIPFILE = dist/${RELEASENAME}-win32.zip
+DMGFILE = dist/${RELEASENAME}-osx.dmg
+PATCHFILE = dist/${RELEASENAME}.patch.gz
 
-${LIBTCODDIR} :
-	src/get-libtcod.sh
+GLOBAL_HEADERS = \
+	src/brogue/IncludeGlobals.h \
+	src/brogue/Rogue.h
 
-tar : both
-	rm -f ${RELEASENAME}.tar.gz
-	tar --transform 's,^,${RELEASENAME}/,' -czf ${RELEASENAME}.tar.gz \
-	Makefile \
+SOURCE = \
+	src/brogue/Architect.c \
+	src/brogue/Combat.c \
+	src/brogue/Dijkstra.c \
+	src/brogue/Globals.c \
+	src/brogue/IO.c \
+	src/brogue/Items.c \
+	src/brogue/Light.c \
+	src/brogue/Monsters.c \
+	src/brogue/Buttons.c \
+	src/brogue/Movement.c \
+	src/brogue/Recordings.c \
+	src/brogue/RogueMain.c \
+	src/brogue/Random.c \
+	src/brogue/MainMenu.c \
+	src/brogue/Grid.c \
+	\
+	src/platform/main.c \
+	src/platform/platformdependent.c \
+	src/platform/sdl-platform.c \
+        src/platform/sdl-keymap.c \
+	src/platform/sdl-svgset.c 
+
+DISTFILES = \
+	readme \
 	brogue \
+	Makefile \
+	Makefile.win32 \
+	Makefile.osx \
+	package-dylibs.py \
 	$(wildcard *.sh) \
 	$(wildcard *.rtf) \
-	readme \
 	$(wildcard *.txt) \
-	bin/brogue \
 	bin/keymap \
 	bin/icon.bmp \
 	bin/brogue-icon.png \
-	$(wildcard bin/fonts/*.png) \
-	$(wildcard bin/*.so) \
-	$(wildcard src/*.sh) \
-	$(wildcard src/brogue/*.c) \
-	$(wildcard src/brogue/*.h) \
-	$(wildcard src/platform/*.c) \
-	$(wildcard src/platform/*.h)
+	bin/brogue-icon.ico \
+	bin/Andale_Mono.ttf \
+	$(wildcard src/brogue/*.[mch]) \
+	$(wildcard src/platform/*.[mch]) \
+	src/platform/brogue.rc \
+	$(wildcard svg/*.svg) \
+	$(wildcard res/*)
 
+SRCSVG = $(wildcard svg/*.svg)
+DSTSVG = $(SRCSVG:%=bin/%)
+
+OBJS = $(SOURCE:%.c=%.${SYSTEM_NAME}.o) $(OBJC_SOURCE:%.m=%.${SYSTEM_NAME}.o)
+
+.PHONY: all clean debdepends linux win32 osx dist distdir svgdir
+
+ifeq (${SYSTEM_NAME},Darwin)
+all: osx
+else
+all: linux
+endif
+
+include Makefile.win32
+include Makefile.osx
+
+linux: debdepends bin/brogue svgdir
+
+debdepends:
+	./checkdeps.sh librsvg2-dev libsdl-ttf2.0-dev libsdl1.2-dev
+
+bin/brogue: ${OBJS}
+	gcc -o bin/brogue ${OBJS} ${LDFLAGS}
+
+svgdir: bin/svg $(DSTSVG)
+
+bin/svg: 
+	mkdir -p bin/svg
+
+bin/svg/%.svg: svg/%.svg
+	cp $< $@
+
+%.${SYSTEM_NAME}.o: %.c ${GLOBAL_HEADERS}
+	gcc ${CFLAGS} -c $< -o $@ 
+
+%.${SYSTEM_NAME}.o: %.m ${GLOBAL_HEADERS}
+	gcc ${CFLAGS} -c $< -o $@ 
+
+clean: osxdist_ssh_clean
+	rm -fr src/brogue/*.o src/platform/*.o bin/brogue bin/svg win32 Brogue.app osx osx-build
+
+objclean:
+	rm -fr src/brogue/*.o src/platform/*.o
+
+dist: ${TARFILE} ${ZIPFILE} ${PATCHFILE} osxdist_ssh
+
+distdir:
+	mkdir -p dist
+
+tar: ${TARFILE} ${PATCHFILE}
+
+${TARFILE}: distdir all
+	rm -f ${TARFILE}
+	tar ${TARFLAGS} -czf ${TARFILE} ${DISTFILES}
+
+${PATCHFILE}: distdir
+	git diff upstream HEAD | gzip >${PATCHFILE}

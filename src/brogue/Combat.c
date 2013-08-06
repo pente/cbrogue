@@ -172,7 +172,7 @@ void monsterShoots(creature *attacker, short targetLoc[2], uchar projChar, color
 			foreColor = gray;
 			colorMultiplierFromDungeonLight(x, y, &multColor);
 			applyColorMultiplier(&foreColor, &multColor);
-			plotCharWithColor(projChar, mapToWindowX(x), mapToWindowY(y), projColor, &backColor);
+			plotCharWithColor(projChar, mapToWindowX(x), mapToWindowY(y), projColor, &backColor, PLOT_CHAR_TILE);
 			
 			if (!fastForward) {
 				fastForward = rogue.playbackFastForward || pauseBrogue(50);

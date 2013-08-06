@@ -2391,6 +2391,7 @@ void updateVision(boolean refreshDisplay) {
     updateTelepathy();
 	updateLighting();
 	updateFieldOfViewDisplay(true, refreshDisplay);
+	displayLevel();
 	
 //	for (i=0; i<DCOLS; i++) {
 //		for (j=0; j<DROWS; j++) {

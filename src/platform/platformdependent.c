@@ -21,6 +21,8 @@
  *  along with Brogue.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <glib.h>
+#include <glib/gstdio.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -47,8 +49,9 @@ brogueScoreEntry scoreBuffer[HIGH_SCORES_COUNT];
 void plotChar(uchar inputChar,
 			  short xLoc, short yLoc,
 			  short foreRed, short foreGreen, short foreBlue,
-			  short backRed, short backGreen, short backBlue) {
-	currentConsole.plotChar(inputChar, xLoc, yLoc, foreRed, foreGreen, foreBlue, backRed, backGreen, backBlue);
+			  short backRed, short backGreen, short backBlue,
+			  int flags) {
+	currentConsole.plotChar(inputChar, xLoc, yLoc, foreRed, foreGreen, foreBlue, backRed, backGreen, backBlue, flags);
 }
 
 void pausingTimerStartsNow() {
@@ -70,12 +73,16 @@ boolean pauseForMilliseconds(short milliseconds) {
 	return currentConsole.pauseForMilliseconds(milliseconds);
 }
 
+FILE *openHighScores(char *mode) {
+	return fopen("BrogueHighScores.txt", mode);
+}
+
 // creates an empty high scores file
 void initScores() {
 	short i;
 	FILE *scoresFile;
 	
-	scoresFile = fopen("BrogueHighScores.txt", "w");
+	scoresFile = openHighScores("w");
 	for (i=0; i<HIGH_SCORES_COUNT; i++) {
 		fprintf(scoresFile, "%li\t%li\t%s", (long) 0, (long) 0, "(empty entry)\n");
 	}
@@ -128,11 +135,11 @@ short loadScoreBuffer() {
 	time_t rawtime;
 	struct tm * timeinfo;
 	
-	scoresFile = fopen("BrogueHighScores.txt", "r");
+	scoresFile = openHighScores("r");
 	
 	if (scoresFile == NULL) {
 		initScores();
-		scoresFile = fopen("BrogueHighScores.txt", "r");
+		scoresFile = openHighScores("r");
 	}
 	
 	for (i=0; i<HIGH_SCORES_COUNT; i++) {
@@ -197,7 +204,7 @@ void saveScoreBuffer() {
 	short i;
 	FILE *scoresFile;
 	
-	scoresFile = fopen("BrogueHighScores.txt", "w");
+	scoresFile = openHighScores("w");
 	
 	for (i=0; i<HIGH_SCORES_COUNT; i++) {
 		// save the entry
@@ -260,9 +267,21 @@ boolean saveHighScore(rogueHighScoresEntry theEntry) {
 	return true;
 }
 
-// not needed in libtcod
 void initializeBrogueSaveLocation() {
+	const gchar *config_dir = g_get_user_data_dir();
+	const gchar *app_name = "Brogue";
 	
+	char *config_path = malloc(strlen(config_dir) + strlen(app_name) + 2);
+	if (config_path == NULL)
+	{
+		return;
+	}
+	sprintf(config_path, "%s/%s", config_dir, app_name);
+
+	g_mkdir(config_dir, 0755);
+	g_mkdir(config_path, 0755);
+	g_chdir(config_path);
+	free(config_path);
 }
 
 // start of file listing

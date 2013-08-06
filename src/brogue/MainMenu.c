@@ -58,7 +58,7 @@ void drawMenuFlames(signed short flames[COLS][(ROWS + MENU_FLAME_ROW_PADDING)][3
             }
             
 			if (mask[i][j] == 100) {
-				plotCharWithColor(dchar, i, j, &darkGray, maskColor);
+				plotCharWithColor(dchar, i, j, &darkGray, maskColor, 0);
 			} else {
 				tempColor = black;
 				tempColor.red	= flames[i][j][0] / MENU_FLAME_PRECISION_FACTOR;
@@ -67,7 +67,7 @@ void drawMenuFlames(signed short flames[COLS][(ROWS + MENU_FLAME_ROW_PADDING)][3
 				if (mask[i][j] > 0) {
 					applyColorAverage(&tempColor, maskColor, mask[i][j]);
 				}
-				plotCharWithColor(dchar, i, j, &darkGray, &tempColor);
+				plotCharWithColor(dchar, i, j, &darkGray, &tempColor, 0);
 			}
 		}
 	}
@@ -629,7 +629,7 @@ the first %i depths will, of course, make the game significantly easier.",
 void mainBrogueJunction() {
 	rogueEvent theEvent;
 	char path[BROGUE_FILENAME_MAX], buf[100], seedDefault[100];
-	char maxSeed[20];
+	char maxSeed[64];
 	short i, j, k;
 	boolean seedTooBig;
 	
@@ -643,7 +643,7 @@ void mainBrogueJunction() {
 				displayBuffer[i][j].foreColorComponents[k] = 0;
 				displayBuffer[i][j].backColorComponents[k] = 0;
 			}
-			plotCharWithColor(' ', i, j, &black, &black);
+			plotCharWithColor(' ', i, j, &black, &black, 0);
 		}
 	}
 	

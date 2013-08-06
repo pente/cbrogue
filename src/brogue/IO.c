@@ -704,10 +704,11 @@ void storeColorComponents(char components[3], const color *theColor) {
 
 void bakeTerrainColors(color *foreColor, color *backColor, short x, short y) {
     const short *vals;
+    const short nf = 1000;
+    const short nb = 0;
+    const short neutralColors[8] = {nf, nf, nf, nf, nb, nb, nb, nb};
+
     if (rogue.trueColorMode) {
-        const short nf = 1000;
-        const short nb = 0;
-        const short neutralColors[8] = {nf, nf, nf, nf, nb, nb, nb, nb};
         vals = neutralColors;
     } else {
         vals = &(terrainRandomValues[x][y][0]);
@@ -808,6 +809,36 @@ boolean separateColors(color *fore, color *back) {
 	}
 }
 
+uchar transformCellCharByNeighbors(uchar cellChar, short x, short y)
+{
+    /*  Transform to vertical wall characters if the terrain character
+	below us is the same as ours.  */
+    if (cellChar == 0xE1 || cellChar == WALL_CHAR)
+    {
+	if (y + 1 < DROWS)
+	{
+	    enum tileType lowerTile = pmap[x][y + 1].layers[DUNGEON];
+	    uchar lowerChar = tileCatalog[lowerTile].displayChar;
+	    int flags = pmap[x][y + 1].flags;
+
+	    if ((flags & DISCOVERED) == 0)
+	    {
+		if (!playerCanSeeOrSense(x, y + 1))
+		{
+		    return cellChar;
+		}
+	    }
+	    
+	    if (lowerChar == cellChar)
+	    {
+		cellChar = 0xB1;
+	    }
+	}
+    }
+
+    return cellChar;
+}
+
 // okay, this is kind of a beast...
 void getCellAppearance(short x, short y, uchar *returnChar, color *returnForeColor, color *returnBackColor) {
 	short bestBCPriority, bestFCPriority, bestCharPriority;
@@ -899,7 +930,7 @@ void getCellAppearance(short x, short y, uchar *returnChar, color *returnForeCol
 				}
 			}
 		}
-		
+
 		if (rogue.trueColorMode) {
 			lightMultiplierColor = colorMultiplier100;
 		} else {
@@ -1046,6 +1077,8 @@ void getCellAppearance(short x, short y, uchar *returnChar, color *returnForeCol
 		}
 	}
 	
+	cellChar = transformCellCharByNeighbors(cellChar, x, y);
+		
 	if (((pmap[x][y].flags & ITEM_DETECTED) || monsterWithDetectedItem
 		 || (monst && monsterRevealed(monst)))
 		&& !playerCanSeeOrSense(x, y)) {
@@ -1179,7 +1212,7 @@ void refreshDungeonCell(short x, short y) {
 #endif
 	color foreColor, backColor;
 	getCellAppearance(x, y, &cellChar, &foreColor, &backColor);
-	plotCharWithColor(cellChar, mapToWindowX(x), mapToWindowY(y), &foreColor, &backColor);
+	plotCharWithColor(cellChar, mapToWindowX(x), mapToWindowY(y), &foreColor, &backColor, PLOT_CHAR_TILE);
 }
 
 void applyColorMultiplier(color *baseColor, const color *multiplierColor) {
@@ -1264,9 +1297,9 @@ void randomizeColor(color *baseColor, short randomizePercent) {
 }
 
 // Assumes colors are pre-baked.
-void blendAppearances(const color *fromForeColor, const color *fromBackColor, const uchar fromChar,
-                      const color *toForeColor, const color *toBackColor, const uchar toChar,
-                      color *retForeColor, color *retBackColor, uchar *retChar,
+void blendAppearances(const color *fromForeColor, const color *fromBackColor, const uchar fromChar, const int fromFlags,
+                      const color *toForeColor, const color *toBackColor, const uchar toChar, const int toFlags,
+                      color *retForeColor, color *retBackColor, uchar *retChar, int *retFlags,
                       const short percent) {
     // Straight average of the back color:
     *retBackColor = *fromBackColor;
@@ -1275,8 +1308,10 @@ void blendAppearances(const color *fromForeColor, const color *fromBackColor, co
     // Pick the character:
     if (percent >= 50) {
         *retChar = toChar;
+	*retFlags = toFlags;
     } else {
         *retChar = fromChar;
+	*retFlags = fromFlags;
     }
     
     // Pick the method for blending the fore color.
@@ -1305,6 +1340,7 @@ void irisFadeBetweenBuffers(cellDisplayBuffer fromBuf[COLS][ROWS],
     boolean fastForward;
     color fromBackColor, toBackColor, fromForeColor, toForeColor, currentForeColor, currentBackColor;
     uchar fromChar, toChar, currentChar;
+    int fromFlags, toFlags, currentFlags;
     short completionMap[COLS][ROWS], maxDistance;
     
     fastForward = false;
@@ -1346,13 +1382,15 @@ void irisFadeBetweenBuffers(cellDisplayBuffer fromBuf[COLS][ROWS],
                 fromBackColor = colorFromComponents(fromBuf[i][j].backColorComponents);
                 fromForeColor = colorFromComponents(fromBuf[i][j].foreColorComponents);
                 fromChar = fromBuf[i][j].character;
+		fromFlags = fromBuf[i][j].flags;
                 
                 toBackColor = colorFromComponents(toBuf[i][j].backColorComponents);
                 toForeColor = colorFromComponents(toBuf[i][j].foreColorComponents);
                 toChar = toBuf[i][j].character;
+		toFlags = toBuf[i][j].flags;
                 
-                blendAppearances(&fromForeColor, &fromBackColor, fromChar, &toForeColor, &toBackColor, toChar, &currentForeColor, &currentBackColor, &currentChar, clamp(thisCellPercent, 0, 100));
-                plotCharWithColor(currentChar, i, j, &currentForeColor, &currentBackColor);
+                blendAppearances(&fromForeColor, &fromBackColor, fromChar, fromFlags, &toForeColor, &toBackColor, toChar, toFlags, &currentForeColor, &currentBackColor, &currentChar, &currentFlags, clamp(thisCellPercent, 0, 100));
+                plotCharWithColor(currentChar, i, j, &currentForeColor, &currentBackColor, currentFlags);
             }
         }
         
@@ -1370,7 +1408,7 @@ void colorBlendCell(short x, short y, color *hiliteColor, short hiliteStrength) 
 	getCellAppearance(x, y, &displayChar, &foreColor, &backColor);
 	applyColorAverage(&foreColor, hiliteColor, hiliteStrength);
 	applyColorAverage(&backColor, hiliteColor, hiliteStrength);
-	plotCharWithColor(displayChar, mapToWindowX(x), mapToWindowY(y), &foreColor, &backColor);
+	plotCharWithColor(displayChar, mapToWindowX(x), mapToWindowY(y), &foreColor, &backColor, PLOT_CHAR_TILE);
 }
 
 // takes dungeon coordinates
@@ -1386,7 +1424,7 @@ void hiliteCell(short x, short y, const color *hiliteColor, short hiliteStrength
 	if (distinctColors) {
 		separateColors(&foreColor, &backColor);
 	}
-	plotCharWithColor(displayChar, mapToWindowX(x), mapToWindowY(y), &foreColor, &backColor);
+	plotCharWithColor(displayChar, mapToWindowX(x), mapToWindowY(y), &foreColor, &backColor, PLOT_CHAR_TILE);
 	
 	restoreRNG;
 }
@@ -1409,7 +1447,7 @@ void colorMultiplierFromDungeonLight(short x, short y, color *editColor) {
 	editColor->colorDances = false;
 }
 
-void plotCharWithColor(uchar inputChar, short xLoc, short yLoc, const color *cellForeColor, const color *cellBackColor) {
+void plotCharWithColor(uchar inputChar, short xLoc, short yLoc, const color *cellForeColor, const color *cellBackColor, int flags) {
 	
 	short foreRed = cellForeColor->red,
 	foreGreen = cellForeColor->green,
@@ -1472,14 +1510,15 @@ void plotCharWithColor(uchar inputChar, short xLoc, short yLoc, const color *cel
 		displayBuffer[xLoc][yLoc].backColorComponents[0] = backRed;
 		displayBuffer[xLoc][yLoc].backColorComponents[1] = backGreen;
 		displayBuffer[xLoc][yLoc].backColorComponents[2] = backBlue;
+		displayBuffer[xLoc][yLoc].flags = flags;
 	}
 	
 	restoreRNG;
 }
 
-void plotCharToBuffer(uchar inputChar, short x, short y, color *foreColor, color *backColor, cellDisplayBuffer dbuf[COLS][ROWS]) {
+void plotCharToBuffer(uchar inputChar, short x, short y, color *foreColor, color *backColor, cellDisplayBuffer dbuf[COLS][ROWS], int flags) {
 	if (!dbuf) {
-		plotCharWithColor(inputChar, x, y, foreColor, backColor);
+		plotCharWithColor(inputChar, x, y, foreColor, backColor, flags);
 		return;
 	}
 	
@@ -1496,6 +1535,7 @@ void plotCharToBuffer(uchar inputChar, short x, short y, color *foreColor, color
 	dbuf[x][y].backColorComponents[2] = backColor->blue + rand_range(0, backColor->blueRand) + rand_range(0, backColor->rand);
 	dbuf[x][y].character = inputChar;
 	dbuf[x][y].opacity = 100;
+	dbuf[x][y].flags = flags;
 	restoreRNG;
 }
 
@@ -1513,7 +1553,8 @@ void commitDraws() {
 						 displayBuffer[i][j].foreColorComponents[2],
 						 displayBuffer[i][j].backColorComponents[0],
 						 displayBuffer[i][j].backColorComponents[1],
-						 displayBuffer[i][j].backColorComponents[2]);
+					 	 displayBuffer[i][j].backColorComponents[2],
+				    		 displayBuffer[i][j].flags);
 				displayBuffer[i][j].needsUpdate = false;
 			}
 		}
@@ -1537,7 +1578,7 @@ void dumpLevelToScreen() {
 				refreshDungeonCell(i, j);
 				pmap[i][j] = backup;
 			} else {
-				plotCharWithColor(' ', mapToWindowX(i), mapToWindowY(j), &white, &black);
+				plotCharWithColor(' ', mapToWindowX(i), mapToWindowY(j), &white, &black, 0);
 			}
 
 		}
@@ -1589,7 +1630,7 @@ void blackOutScreen() {
 	
 	for (i=0; i<COLS; i++) {
 		for (j=0; j<ROWS; j++) {
-			plotCharWithColor(' ', i, j, &black, &black);
+			plotCharWithColor(' ', i, j, &black, &black, 0);
 		}
 	}
 }
@@ -1599,7 +1640,7 @@ void colorOverDungeon(const color *color) {
 	
 	for (i=0; i<DCOLS; i++) {
 		for (j=0; j<DROWS; j++) {
-			plotCharWithColor(' ', mapToWindowX(i), mapToWindowY(j), color, color);
+			plotCharWithColor(' ', mapToWindowX(i), mapToWindowY(j), color, color, 0);
 		}
 	}
 }
@@ -1643,6 +1684,7 @@ void overlayDisplayBuffer(cellDisplayBuffer overBuf[COLS][ROWS], cellDisplayBuff
 	short i, j;
 	color foreColor, backColor, tempColor;
 	uchar character;
+	int flags;
 	
 	if (previousBuf) {
 		copyDisplayBuffer(previousBuf, displayBuffer);
@@ -1658,17 +1700,19 @@ void overlayDisplayBuffer(cellDisplayBuffer overBuf[COLS][ROWS], cellDisplayBuff
 				if (overBuf[i][j].character == ' ') { // Blank cells in the overbuf take the character from the screen.
 					character = displayBuffer[i][j].character;
 					foreColor = colorFromComponents(displayBuffer[i][j].foreColorComponents);
+					flags = displayBuffer[i][j].flags;
 					applyColorAverage(&foreColor, &backColor, overBuf[i][j].opacity);
 				} else {
 					character = overBuf[i][j].character;
 					foreColor = colorFromComponents(overBuf[i][j].foreColorComponents);
+					flags = overBuf[i][j].flags;
 				}
 				
 				// back color:
 				tempColor = colorFromComponents(displayBuffer[i][j].backColorComponents);
 				applyColorAverage(&backColor, &tempColor, 100 - overBuf[i][j].opacity);
 				
-				plotCharWithColor(character, i, j, &foreColor, &backColor);
+				plotCharWithColor(character, i, j, &foreColor, &backColor, flags);
 			}
 		}
 	}
@@ -1702,7 +1746,7 @@ void flashForeground(short *x, short *y, color **flashColor, short *flashStrengt
 			percent = flashStrength[i] * j / frames;
 			newColor = fColor[i];
 			applyColorAverage(&newColor, flashColor[i], percent);
-			plotCharWithColor(displayChar[i], mapToWindowX(x[i]), mapToWindowY(y[i]), &newColor, &(bColor[i]));
+			plotCharWithColor(displayChar[i], mapToWindowX(x[i]), mapToWindowY(y[i]), &newColor, &(bColor[i]), PLOT_CHAR_TILE);
 		}
 		if (j) {
 			if (pauseBrogue(1)) {
@@ -1789,6 +1833,7 @@ void funkyFade(cellDisplayBuffer displayBuf[COLS][ROWS], const color *colorStart
 	double x2, y2, weightGrid[COLS][ROWS][3], percentComplete;
 	color tempColor, colorMid, foreColor, backColor;
 	uchar tempChar;
+	int tempFlags;
 	short **distanceMap;
 	boolean fastForward;
     
@@ -1856,8 +1901,10 @@ void funkyFade(cellDisplayBuffer displayBuf[COLS][ROWS], const color *colorStart
 					&& i >= mapToWindowX(0)
 					&& i < mapToWindowX(strLenWithoutEscapes(displayedMessage[MESSAGE_LINES - j - 1]))) {
 					tempChar = displayedMessage[MESSAGE_LINES - j - 1][windowToMapX(i)];
+					tempFlags = 0;
 				} else {
 					tempChar = displayBuf[i][j].character;
+					tempFlags = displayBuf[i][j].flags;
 					
 					foreColor.red = displayBuf[i][j].foreColorComponents[0];
 					foreColor.green = displayBuf[i][j].foreColorComponents[1];
@@ -1866,7 +1913,7 @@ void funkyFade(cellDisplayBuffer displayBuf[COLS][ROWS], const color *colorStart
 					applyColorAverage(&foreColor, &tempColor, weight);
 				}
 				applyColorAverage(&backColor, &tempColor, weight);
-				plotCharWithColor(tempChar, i, j, &foreColor, &backColor);
+				plotCharWithColor(tempChar, i, j, &foreColor, &backColor, tempFlags);
 			}
 		}
 		if (!fastForward && pauseBrogue(1)) {
@@ -1926,7 +1973,7 @@ void displayMachines() {
                 } else {
                     dchar = 'A' + pmap[i][j].machineNumber - 10 - 26;
                 }
-                plotCharWithColor(dchar, mapToWindowX(i), mapToWindowY(j), &foreColor, &backColor);
+                plotCharWithColor(dchar, mapToWindowX(i), mapToWindowY(j), &foreColor, &backColor, 0);
 			}
 		}
 	}
@@ -1948,12 +1995,12 @@ void displayChokeMap() {
 				if (pmap[i][j].flags & IS_GATE_SITE) {
 					getCellAppearance(i, j, &dchar, &foreColor, &backColor);
 					applyColorAugment(&backColor, &teal, 50);
-					plotCharWithColor(dchar, mapToWindowX(i), mapToWindowY(j), &foreColor, &backColor);
+					plotCharWithColor(dchar, mapToWindowX(i), mapToWindowY(j), &foreColor, &backColor, 0);
 				} else
 					if (chokeMap[i][j] < CHOKEMAP_DISPLAY_CUTOFF) {
 					getCellAppearance(i, j, &dchar, &foreColor, &backColor);
 					applyColorAugment(&backColor, &red, 100 - chokeMap[i][j] * 100 / CHOKEMAP_DISPLAY_CUTOFF);
-					plotCharWithColor(dchar, mapToWindowX(i), mapToWindowY(j), &foreColor, &backColor);
+					plotCharWithColor(dchar, mapToWindowX(i), mapToWindowY(j), &foreColor, &backColor, 0);
 				}
 			}
 		}
@@ -1972,13 +2019,13 @@ void displayLoops() {
 			if (pmap[i][j].flags & IN_LOOP) {
 				getCellAppearance(i, j, &dchar, &foreColor, &backColor);
 				applyColorAugment(&backColor, &yellow, 50);
-				plotCharWithColor(dchar, mapToWindowX(i), mapToWindowY(j), &foreColor, &backColor);
+				plotCharWithColor(dchar, mapToWindowX(i), mapToWindowY(j), &foreColor, &backColor, 0);
 				//colorBlendCell(i, j, &tempColor, 100);//hiliteCell(i, j, &tempColor, 100, true);
 			}
 			if (pmap[i][j].flags & IS_CHOKEPOINT) {
 				getCellAppearance(i, j, &dchar, &foreColor, &backColor);
 				applyColorAugment(&backColor, &teal, 50);
-				plotCharWithColor(dchar, mapToWindowX(i), mapToWindowY(j), &foreColor, &backColor);
+				plotCharWithColor(dchar, mapToWindowX(i), mapToWindowY(j), &foreColor, &backColor, 0);
 			}
 		}
 	}
@@ -2328,7 +2375,7 @@ boolean getInputTextString(char *inputText,
 		overlayDisplayBuffer(dbuf, rbuf);
 		printString(prompt, x, y - 1, &white, &interfaceBoxColor, NULL);
 		for (i=0; i<maxLength; i++) {
-			plotCharWithColor(' ', x + i, y, &black, &black);
+			plotCharWithColor(' ', x + i, y, &black, &black, 0);
 		}
 		printString(defaultEntry, x, y, &white, &black, 0);
 	} else {
@@ -2356,18 +2403,18 @@ boolean getInputTextString(char *inputText,
 	
 	do {
 		printString(suffix, charNum + x, y, &gray, &black, 0);
-		plotCharWithColor((suffix[0] ? suffix[0] : ' '), x + charNum, y, &black, &white);
+		plotCharWithColor((suffix[0] ? suffix[0] : ' '), x + charNum, y, &black, &white, 0);
 		keystroke = nextKeyPress(true);
 		if (keystroke == DELETE_KEY && charNum > 0) {
 			printString(suffix, charNum + x - 1, y, &gray, &black, 0);
-			plotCharWithColor(' ', x + charNum + strlen(suffix) - 1, y, &black, &black);
+			plotCharWithColor(' ', x + charNum + strlen(suffix) - 1, y, &black, &black, 0);
 			charNum--;
 			inputText[charNum] = ' ';
 		} else if (keystroke >= textEntryBounds[textEntryType][0]
 				   && keystroke <= textEntryBounds[textEntryType][1]) { // allow only permitted input
 			
 			inputText[charNum] = keystroke;
-			plotCharWithColor(keystroke, x + charNum, y, &white, &black);
+			plotCharWithColor(keystroke, x + charNum, y, &white, &black, 0);
 			printString(suffix, charNum + x + 1, y, &gray, &black, 0);
 			if (charNum < maxLength) {
 				charNum++;
@@ -2400,6 +2447,7 @@ void flashMessage(char *message, short x, short y, int time, color *fColor, colo
 	color backColors[COLS], backColor, foreColor;
 	cellDisplayBuffer dbufs[COLS];
 	uchar dchar;
+	int dflags;
 	
 	if (rogue.playbackFastForward) {
 		return;
@@ -2429,14 +2477,16 @@ void flashMessage(char *message, short x, short y, int time, color *fColor, colo
 				applyColorAverage(&backColor, bColor, 100 - percentComplete);
 				if (percentComplete < 50) {
 					dchar = message[j];
+					dflags = 0;
 					foreColor = *fColor;
 					applyColorAverage(&foreColor, &backColor, percentComplete * 2);
 				} else {
 					dchar = dbufs[j].character;
+					dflags = dbufs[j].flags;
 					foreColor = colorFromComponents(dbufs[j].foreColorComponents);
 					applyColorAverage(&foreColor, &backColor, (100 - percentComplete) * 2);
 				}
-				plotCharWithColor(dchar, j+x, y, &foreColor, &backColor);
+				plotCharWithColor(dchar, j+x, y, &foreColor, &backColor, dflags);
 			}
 		}
 		previousPercentComplete = percentComplete;
@@ -2444,7 +2494,7 @@ void flashMessage(char *message, short x, short y, int time, color *fColor, colo
 	}
 	for (j=0; j<messageLength; j++) {
         foreColor = colorFromComponents(dbufs[j].foreColorComponents);
-		plotCharWithColor(dbufs[j].character, j+x, y, &foreColor, &(backColors[j]));
+	plotCharWithColor(dbufs[j].character, j+x, y, &foreColor, &(backColors[j]), dbufs[j].flags);
 	}
 	
 	restoreRNG;
@@ -2641,7 +2691,7 @@ void temporaryMessage(char *msg, boolean requireAcknowledgment) {
 	
 	for (i=0; i<MESSAGE_LINES; i++) {
 		for (j=0; j<DCOLS; j++) {
-			plotCharWithColor(' ', mapToWindowX(j), i, &black, &black);
+			plotCharWithColor(' ', mapToWindowX(j), i, &black, &black, 0);
 		}
 	}
 	printString(message, mapToWindowX(0), mapToWindowY(-1), &white, &black, 0);
@@ -2676,7 +2726,7 @@ void flavorMessage(char *msg) {
 	
 	printString(text, mapToWindowX(0), ROWS - 2, &flavorTextColor, &black, 0);
 	for (i = strLenWithoutEscapes(text); i < DCOLS; i++) {
-		plotCharWithColor(' ', mapToWindowX(i), ROWS - 2, &black, &black);
+		plotCharWithColor(' ', mapToWindowX(i), ROWS - 2, &black, &black, 0);
 	}
 }
 
@@ -2871,10 +2921,11 @@ void updateMessageDisplay() {
 			
 			plotCharWithColor(displayedMessage[i][m], mapToWindowX(j), MESSAGE_LINES - i - 1,
 							  &messageColor,
-							  &black);
+							  &black,
+							  0);
 		}
 		for (; j < DCOLS; j++) {
-			plotCharWithColor(' ', mapToWindowX(j), MESSAGE_LINES - i - 1, &black, &black);
+			plotCharWithColor(' ', mapToWindowX(j), MESSAGE_LINES - i - 1, &black, &black, 0);
 		}
 	}
 }
@@ -3155,9 +3206,9 @@ void printString(const char *theString, short x, short y, color *foreColor, colo
 		}
 		
 		if (dbuf) {
-			plotCharToBuffer(theString[i], x, y, &fColor, backColor, dbuf);
+			plotCharToBuffer(theString[i], x, y, &fColor, backColor, dbuf, 0);
 		} else {
-			plotCharWithColor(theString[i], x, y, &fColor, backColor);
+			plotCharWithColor(theString[i], x, y, &fColor, backColor, 0);
 		}
 	}
 }
@@ -3280,11 +3331,11 @@ short printStringWithWrapping(char *theString, short x, short y, short width, co
 		
 		if (dbuf) {
 			if (coordinatesAreInWindow(px, py)) {
-				plotCharToBuffer(printString[i], px, py, &fColor, backColor, dbuf);
+				plotCharToBuffer(printString[i], px, py, &fColor, backColor, dbuf, 0);
 			}
 		} else {
 			if (coordinatesAreInWindow(px, py)) {
-				plotCharWithColor(printString[i], px, py, &fColor, backColor);
+				plotCharWithColor(printString[i], px, py, &fColor, backColor, 0);
 			}
 		}
 		
@@ -3392,7 +3443,7 @@ void printDiscoveries(short category, short count, unsigned short itemCharacter,
 	for (i = 0; i < count; i++) {
 		if (theTable[i].identified) {
 			theColor = &white;
-			plotCharToBuffer(itemCharacter, x, y + i, &itemColor, &black, dbuf);
+			plotCharToBuffer(itemCharacter, x, y + i, &itemColor, &black, dbuf, PLOT_CHAR_TILE);
 		} else {
 			theColor = &darkGray;
 		}
@@ -3405,14 +3456,14 @@ void printDiscoveries(short category, short count, unsigned short itemCharacter,
 		
 		x2 = x + 2 + strLenWithoutEscapes(buf);
 		magic = magicCharDiscoverySuffix(category, i);
-		plotCharToBuffer('(', x2++, y + i, &darkGray, &black, dbuf);
+		plotCharToBuffer('(', x2++, y + i, &darkGray, &black, dbuf, 0);
 		if (magic != -1) {
-			plotCharToBuffer(GOOD_MAGIC_CHAR, x2++, y + i, &goodColor, &black, dbuf);
+		    	plotCharToBuffer(GOOD_MAGIC_CHAR, x2++, y + i, &goodColor, &black, dbuf, PLOT_CHAR_TILE);
 		}
 		if (magic != 1) {
-			plotCharToBuffer(BAD_MAGIC_CHAR, x2++, y + i, &badColor, &black, dbuf);
+		    plotCharToBuffer(BAD_MAGIC_CHAR, x2++, y + i, &badColor, &black, dbuf, PLOT_CHAR_TILE);
 		}
-		plotCharToBuffer(')', x2++, y + i, &darkGray, &black, dbuf);
+		plotCharToBuffer(')', x2++, y + i, &darkGray, &black, dbuf, 0);
 	}
 }
 
@@ -3640,7 +3691,7 @@ void displayGrid(short **map) {
 			score -= 100;
 			tempColor.green = max(min(score, 100), 0);
 			getCellAppearance(i, j, &dchar, &foreColor, &backColor);
-			plotCharWithColor(dchar, mapToWindowX(i), mapToWindowY(j), &foreColor, &tempColor);
+			plotCharWithColor(dchar, mapToWindowX(i), mapToWindowY(j), &foreColor, &tempColor, 0);
 			//colorBlendCell(i, j, &tempColor, 100);//hiliteCell(i, j, &tempColor, 100, false);
 		}
 	}
@@ -3700,7 +3751,7 @@ void printProgressBar(short x, short y, const char barLabel[COLS], long amtFille
 		}
 		textColor = (dim ? gray : white);
 		applyColorAverage(&textColor, &currentFillColor, (dim ? 50 : 33));
-		plotCharWithColor(barText[i], x + i, y, &textColor, &currentFillColor);
+		plotCharWithColor(barText[i], x + i, y, &textColor, &currentFillColor, 0);
 	}
 }
 
@@ -3793,7 +3844,7 @@ short printMonsterInfo(creature *monst, short y, boolean dim, boolean highlight)
 			applyColorAugment(&monstForeColor, &black, 100);
 			applyColorAugment(&monstBackColor, &black, 100);
 		}
-		plotCharWithColor(monstChar, 0, y, &monstForeColor, &monstBackColor);
+		plotCharWithColor(monstChar, 0, y, &monstForeColor, &monstBackColor, PLOT_CHAR_TILE);
 		monsterName(monstName, monst, false);
 		upperCase(monstName);
         
@@ -4011,7 +4062,7 @@ short printItemInfo(item *theItem, short y, boolean dim, boolean highlight) {
 			applyColorAverage(&itemForeColor, &black, 50);
 			applyColorAverage(&itemBackColor, &black, 50);
 		}
-		plotCharWithColor(itemChar, 0, y, &itemForeColor, &itemBackColor);
+		plotCharWithColor(itemChar, 0, y, &itemForeColor, &itemBackColor, PLOT_CHAR_TILE);
 		printString(":                  ", 1, y, (dim ? &gray : &white), &black, 0);
 		if (rogue.playbackOmniscience || !player.status[STATUS_HALLUCINATING]) {
 			itemName(theItem, name, true, true, (dim ? &gray : &white));
@@ -4071,7 +4122,7 @@ short printTerrainInfo(short x, short y, short py, const char *description, bool
 			applyColorAverage(&foreColor, &black, 50);
 			applyColorAverage(&backColor, &black, 50);
 		}
-		plotCharWithColor(displayChar, 0, py, &foreColor, &backColor);
+		plotCharWithColor(displayChar, 0, py, &foreColor, &backColor, PLOT_CHAR_TILE);
 		printString(":                  ", 1, py, (dim ? &gray : &white), &black, 0);
 		strcpy(name, description);
 		upperCase(name);

@@ -624,7 +624,7 @@ void populateItems(short upstairsX, short upstairsY) {
 			dumpLevelToScreen();
 			displayGrid(map);
 			freeGrid(map);
-			plotCharWithColor(theItem->displayChar, mapToWindowX(x), mapToWindowY(y), &black, &purple);
+			plotCharWithColor(theItem->displayChar, mapToWindowX(x), mapToWindowY(y), &black, &purple, PLOT_CHAR_TILE);
 			temporaryMessage("Added an item.", true);
 		}
 	}
@@ -2432,6 +2432,9 @@ char displayInventory(unsigned short categoryMask,
 		if ((theItem->flags & ITEM_MAGIC_DETECTED)
 			&& !(theItem->category & AMULET)) { // Won't include food, keys, lumenstones or amulet.
 			buttons[i].symbol[0] = (itemMagicChar(theItem) ? itemMagicChar(theItem) : '-');
+			if (buttons[i].symbol[0] != '-') {
+				buttons[i].symbol_flags[0] = PLOT_CHAR_TILE;
+			}
 			if (buttons[i].symbol[0] == '-') {
 				magicEscapePtr = yellowColorEscapeSequence;
 			} else if (buttons[i].symbol[0] == GOOD_MAGIC_CHAR) {
@@ -2452,6 +2455,7 @@ char displayInventory(unsigned short categoryMask,
 					grayColorEscapeSequence,
 					(theItem->flags & ITEM_EQUIPPED ? ((theItem->category & WEAPON) ? " (in hand) " : " (worn) ") : ""));
 			buttons[i].symbol[1] = theItem->displayChar;
+			buttons[i].symbol_flags[1] = PLOT_CHAR_TILE;
 		} else {
 			sprintf(buttons[i].text, " %c%s %s%s* %s%s%s%s", // The '*' is the item character, e.g. ':' for food.
 					theItem->inventoryLetter,
@@ -2463,6 +2467,7 @@ char displayInventory(unsigned short categoryMask,
 					grayColorEscapeSequence,
 					(theItem->flags & ITEM_EQUIPPED ? ((theItem->category & WEAPON) ? " (in hand) " : " (worn) ") : ""));
 			buttons[i].symbol[0] = theItem->displayChar;
+			buttons[i].symbol_flags[0] = PLOT_CHAR_TILE;
 		}
 		
 		// Keep track of the maximum width needed:
@@ -5084,7 +5089,7 @@ void throwItem(item *theItem, creature *thrower, short targetLoc[2], short maxDi
 			} else { // clairvoyant visible
 				applyColorMultiplier(&foreColor, &clairvoyanceColor);
 			}
-			plotCharWithColor(theItem->displayChar, mapToWindowX(x), mapToWindowY(y), &foreColor, &backColor);
+			plotCharWithColor(theItem->displayChar, mapToWindowX(x), mapToWindowY(y), &foreColor, &backColor, PLOT_CHAR_TILE);
 			
 			if (!fastForward) {
 				fastForward = rogue.playbackFastForward || pauseBrogue(25);

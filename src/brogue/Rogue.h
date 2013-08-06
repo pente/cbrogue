@@ -144,11 +144,11 @@
 #ifdef USE_UNICODE
 
 #define FLOOR_CHAR		0x00b7
-#define LIQUID_CHAR		'~'
-#define CHASM_CHAR		0x2237
-#define TRAP_CHAR		0x25c7
-#define FIRE_CHAR		0x22CF
-#define GRASS_CHAR		'"'
+#define LIQUID_CHAR	        '~'
+#define CHASM_CHAR		0x0081
+#define TRAP_CHAR		0x0082
+#define FIRE_CHAR		0x0083
+#define GRASS_CHAR	        '"'
 #define BRIDGE_CHAR		'='
 #define DESCEND_CHAR	'>'
 #define ASCEND_CHAR		'<'
@@ -158,9 +158,9 @@
 #define ASH_CHAR		'\''
 #define BONES_CHAR		','
 #define MUD_CHAR		','
-#define WEB_CHAR		':'
+#define WEB_CHAR		'W'
 //#define FOLIAGE_CHAR	0x03A8 // lower-case psi
-#define FOLIAGE_CHAR	0x2648 // Aries symbol
+#define FOLIAGE_CHAR	0x0084 // Aries symbol
 #define ALTAR_CHAR		'|'
 #define LEVER_CHAR      '/'
 #define LEVER_PULLED_CHAR '\\'
@@ -171,21 +171,20 @@
 
 #define PLAYER_CHAR		'@'
 
-#define AMULET_CHAR		0x2640
+#define AMULET_CHAR		0x0085
 #define FOOD_CHAR		':'
-#define SCROLL_CHAR		0x266A//'?'		// 0x039E
-//#define RING_CHAR		0x26AA //0xffee
-#define RING_CHAR		0xffee
-#define CHARM_CHAR      0x03DE
+#define SCROLL_CHAR		0x0086//'?'		// 0x039E
+#define RING_CHAR		0x0087
+#define CHARM_CHAR      0x0099
 #define POTION_CHAR		'!'
 #define ARMOR_CHAR		'['
-#define WEAPON_CHAR		0x2191
+#define WEAPON_CHAR		0x0088
 #define STAFF_CHAR		'\\'
-#define WAND_CHAR		'~'
+#define WAND_CHAR		0x00e0
 #define GOLD_CHAR		'*'
-#define GEM_CHAR		0x25cf
-#define TOTEM_CHAR		0x26b2
-#define TURRET_CHAR		0x25cf
+#define GEM_CHAR		0x0089
+#define TOTEM_CHAR		0x008A
+#define TURRET_CHAR		0x008B
 #define UNICORN_CHAR    0x00da
 #define KEY_CHAR		'-'
 
@@ -195,7 +194,7 @@
 #define RIGHT_ARROW_CHAR	0x2192
 #define UP_TRIANGLE_CHAR	0x2206
 #define DOWN_TRIANGLE_CHAR	0x2207
-#define OMEGA_CHAR			0x03A9
+#define OMEGA_CHAR			0x0096
 #define THETA_CHAR			0x03B8
 #define LAMDA_CHAR			0x03BB
 #define KOPPA_CHAR			0x03DF//0x03DE
@@ -211,8 +210,8 @@
 #define CHAIN_LEFT			'-'
 #define CHAIN_RIGHT			'-'
 
-#define BAD_MAGIC_CHAR		0x29F2
-#define GOOD_MAGIC_CHAR		0x29F3
+#define BAD_MAGIC_CHAR		0x008C
+#define GOOD_MAGIC_CHAR		0x008D
 
 #else
 
@@ -1150,6 +1149,7 @@ typedef struct cellDisplayBuffer {
 	char backColorComponents[3];
 	char opacity;
 	boolean needsUpdate;
+        int flags;
 } cellDisplayBuffer;
 
 typedef struct pcell {								// permanent cell; have to remember this stuff to save levels
@@ -2280,6 +2280,7 @@ typedef struct brogueButton {
 	uchar symbol[COLS];			// Automatically replace the nth asterisk in the button label text with
 								// the nth character supplied here, if one is given.
 								// (Primarily to display magic character and item symbols in the inventory display.)
+	int symbol_flags[COLS];
 	unsigned long flags;
 } brogueButton;
 
@@ -2320,6 +2321,8 @@ typedef struct buttonState {
 	cellDisplayBuffer dbuf[COLS][ROWS]; // Where buttons are drawn.
 	cellDisplayBuffer rbuf[COLS][ROWS]; // Reversion screen state.
 } buttonState;
+
+#define PLOT_CHAR_TILE 0x00000001
 
 #if defined __cplusplus
 extern "C" {
@@ -2384,7 +2387,8 @@ extern "C" {
 	void plotChar(uchar inputChar,
 				  short xLoc, short yLoc,
 				  short backRed, short backGreen, short backBlue,
-				  short foreRed, short foreGreen, short foreBlue);
+				  short foreRed, short foreGreen, short foreBlue, 
+				  int flags);
 	void pausingTimerStartsNow();
 	boolean pauseForMilliseconds(short milliseconds);
 	void nextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boolean colorsDance);
@@ -2442,8 +2446,8 @@ extern "C" {
 	void colorBlendCell(short x, short y, color *hiliteColor, short hiliteStrength);
 	void hiliteCell(short x, short y, const color *hiliteColor, short hiliteStrength, boolean distinctColors);
 	void colorMultiplierFromDungeonLight(short x, short y, color *editColor);
-	void plotCharWithColor(uchar inputChar, short xLoc, short yLoc, const color *cellForeColor, const color *cellBackColor);
-	void plotCharToBuffer(uchar inputChar, short x, short y, color *foreColor, color *backColor, cellDisplayBuffer dbuf[COLS][ROWS]);
+        void plotCharWithColor(uchar inputChar, short xLoc, short yLoc, const color *cellForeColor, const color *cellBackColor, int flags);
+	void plotCharToBuffer(uchar inputChar, short x, short y, color *foreColor, color *backColor, cellDisplayBuffer dbuf[COLS][ROWS], int flags);
 	void commitDraws();
 	void dumpLevelToScreen();
 	void hiliteCharGrid(char hiliteCharGrid[DCOLS][DROWS], color *hiliteColor, short hiliteStrength);
