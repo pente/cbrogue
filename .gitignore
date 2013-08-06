@@ -1,4 +1,10 @@
 bin/brogue
+bin/BrogueHighScores.txt
+src/libtcod-1.5.2
+src/libtcod-1.5.2-32.tar.gz
+
+*.broguesave
+*.broguerec
 
 # Object files
 *.o
