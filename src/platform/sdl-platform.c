@@ -42,6 +42,7 @@
 #endif
 
 #define FONT_FILENAME APP_PATH "Andale_Mono.ttf"
+// #define FONT_FILENAME APP_PATH "Monaco.ttf"
 #define SVG_PATH APP_PATH "svg"
 
 #define SCREEN_WIDTH 100
@@ -167,6 +168,7 @@ void SdlConsole_plotChar(uchar inputChar,
 
     glyph = NULL;
 
+    // flags = 0;
     if (flags & PLOT_CHAR_TILE)
     {
 	int frame = SDL_GetTicks() / FRAME_TIME; 

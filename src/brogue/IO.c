@@ -811,6 +811,7 @@ boolean separateColors(color *fore, color *back) {
 
 uchar transformCellCharByNeighbors(uchar cellChar, short x, short y)
 {
+#ifdef USE_SVG
     /*  Transform to vertical wall characters if the terrain character
 	below us is the same as ours.  */
     if (cellChar == 0xE1 || cellChar == WALL_CHAR)
@@ -835,6 +836,7 @@ uchar transformCellCharByNeighbors(uchar cellChar, short x, short y)
 	    }
 	}
     }
+#endif
 
     return cellChar;
 }

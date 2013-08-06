@@ -30,6 +30,10 @@
 
 #define USE_UNICODE
 
+// svg: comment this line to use pure ttf, uncomment for svg
+
+// #define USE_SVG
+
 // version string -- no more than 16 bytes:
 #define BROGUE_VERSION_STRING "1.7.2"
 
@@ -143,13 +147,16 @@
 
 #ifdef USE_UNICODE
 
+#ifdef USE_SVG
+// svg
+
 #define FLOOR_CHAR		0x00b7
 #define LIQUID_CHAR	        '~'
 #define CHASM_CHAR		0x0081
 #define TRAP_CHAR		0x0082
 #define FIRE_CHAR		0x0083
 #define GRASS_CHAR	        '"'
-#define BRIDGE_CHAR		'='
+#define BRIDGE_CHAR		0xfa
 #define DESCEND_CHAR	'>'
 #define ASCEND_CHAR		'<'
 #define WALL_CHAR		'#'
@@ -162,8 +169,8 @@
 //#define FOLIAGE_CHAR	0x03A8 // lower-case psi
 #define FOLIAGE_CHAR	0x0084 // Aries symbol
 #define ALTAR_CHAR		'|'
-#define LEVER_CHAR      '/'
-#define LEVER_PULLED_CHAR '\\'
+#define LEVER_CHAR              0xd0
+#define LEVER_PULLED_CHAR       0xd1
 #define STATUE_CHAR		0x00df
 #define VENT_CHAR		'='
 
@@ -201,6 +208,127 @@
 #define LOZENGE_CHAR		0x29EB
 #define CROSS_PRODUCT_CHAR	0x2A2F
 
+#define CHAIN_TOP_LEFT		'1'
+#define CHAIN_BOTTOM_RIGHT	'2'
+#define CHAIN_TOP_RIGHT		'3'
+#define CHAIN_BOTTOM_LEFT	'4'
+#define CHAIN_TOP               '5'
+#define CHAIN_BOTTOM		'6'
+#define CHAIN_LEFT		'7'
+#define CHAIN_RIGHT		'8'
+
+#define BAD_MAGIC_CHAR		0x008C
+#define GOOD_MAGIC_CHAR		0x008D
+
+#define ROUGH_WALL_CHAR         0xe1
+#define CARPET_CHAR             0xe2
+#define IRON_DOOR_CHAR          0xe3
+#define OPEN_IRON_DOOR_CHAR     0xe4
+#define TORCH_CHAR              0xe5
+#define CRYSTAL_CHAR            0xe6
+#define PORTCULLIS_CHAR         0xe7
+#define DRY_BARRICADE_CHAR      0xe8
+#define TORCH2_CHAR             0xe9
+#define TORCH3_CHAR             0xea
+#define CRACKING_STATUE_CHAR    0xeb
+#define ALTAR1_CHAR             0xec
+#define ALTAR2_CHAR             0xed
+#define ALTAR3_CHAR             0xef
+#define IRON_CAGE_CHAR          0xf0
+#define ALTAR4_CHAR             0xf1
+#define PEDESTAL_CHAR           0xf2
+#define OPEN_CAGE_CHAR          0xf3
+#define SEALED_COFFIN_CHAR      0xf4
+#define OPEN_COFFIN_CHAR        0xf5
+#define HOLE_CHAR               0xf6
+#define GLYPH_CHAR              0xf7
+#define BOG_CHAR                0xf8
+#define BRIMSTONE_CHAR          0xf9
+#define BLOOD_CHAR              0xf9
+#define UNICORN_POOP_CHAR       0xfa
+#define BURNT_CARPET_CHAR       0xfb
+#define BONE_PILE_CHAR          0xfc
+#define RUBBLE_CHAR             0xfd
+#define FILTH_CHAR              0xfe
+#define EMBERS_CHAR             '0'
+#define SPIDERWEB_CHAR          ']'
+#define MELTING_CRYSTAL_CHAR    0xe6
+#define STALK_CHAR              0xd2
+#define POD_CHAR                0xd3
+
+#define GOBLIN_CASTER_CHAR      0xc2
+#define OGRE_CASTER_CHAR        0xc4
+#define DAR_PRIESTESS_CHAR      0xc0
+#define DAR_BATTLEMAGE_CHAR     0xc1
+#define PHYLACTERY_CHAR         0xc9
+#define GOBLIN_WARLORD_CHAR     0xc3
+#define SPECTRAL_BLADE_CHAR     0xc5
+#define STONE_GUARDIAN_CHAR     0xc6
+#define WINGED_GUARDIAN_CHAR    0xc7
+#define PHOENIX_CHAR            '{'
+#define PHOENIX_EGG_CHAR        0xc8
+
+#else
+// No svg
+
+#define FLOOR_CHAR		0x00b7
+#define LIQUID_CHAR	        '~'
+#define CHASM_CHAR		0x2237
+#define TRAP_CHAR		0x25c7
+#define FIRE_CHAR		0x22CF
+#define GRASS_CHAR	        '"'
+#define BRIDGE_CHAR		'='
+#define DESCEND_CHAR	'>'
+#define ASCEND_CHAR		'<'
+#define WALL_CHAR		'#'
+#define DOOR_CHAR		'+'
+#define OPEN_DOOR_CHAR	'\''
+#define ASH_CHAR		'\''
+#define BONES_CHAR		','
+#define MUD_CHAR		','
+#define WEB_CHAR		':'
+//#define FOLIAGE_CHAR	0x03A8 // lower-case psi
+#define FOLIAGE_CHAR	0x2648 // Aries symbol
+#define ALTAR_CHAR		'|'
+#define LEVER_CHAR      '/'
+#define LEVER_PULLED_CHAR '\\'
+#define STATUE_CHAR		0x00df
+#define VENT_CHAR		'='
+
+#define TRAMPLED_FOLIAGE_CHAR	'"'		// 0x2034 // 0x2037
+
+#define PLAYER_CHAR		'@'
+
+#define AMULET_CHAR		0x2640
+#define FOOD_CHAR		':'
+#define SCROLL_CHAR		0x266A//'?'		// 0x039E
+#define RING_CHAR		0xffee
+#define CHARM_CHAR              0x03DE
+#define POTION_CHAR		'!'
+#define ARMOR_CHAR		'['
+#define WEAPON_CHAR		0x2191
+#define STAFF_CHAR		'\\'
+#define WAND_CHAR		'~'
+#define GOLD_CHAR		'*'
+#define GEM_CHAR		0x25cf
+#define TOTEM_CHAR		0x26b2
+#define TURRET_CHAR		0x25cf
+#define UNICORN_CHAR            0x00da
+#define KEY_CHAR		'-'
+
+#define UP_ARROW_CHAR		0x2191
+#define DOWN_ARROW_CHAR		0x2193
+#define LEFT_ARROW_CHAR		0x2190
+#define RIGHT_ARROW_CHAR	0x2192
+#define UP_TRIANGLE_CHAR	0x2206
+#define DOWN_TRIANGLE_CHAR	0x2207
+#define OMEGA_CHAR              0x03A9
+#define THETA_CHAR              0x03B8
+#define LAMDA_CHAR              0x03BB
+#define KOPPA_CHAR              0x03DF//0x03DE
+#define LOZENGE_CHAR		0x29EB
+#define CROSS_PRODUCT_CHAR	0x2A2F
+
 #define CHAIN_TOP_LEFT		'\\'
 #define CHAIN_BOTTOM_RIGHT	'\\'
 #define CHAIN_TOP_RIGHT		'/'
@@ -210,10 +338,61 @@
 #define CHAIN_LEFT			'-'
 #define CHAIN_RIGHT			'-'
 
-#define BAD_MAGIC_CHAR		0x008C
-#define GOOD_MAGIC_CHAR		0x008D
+#define BAD_MAGIC_CHAR		0x29F2
+#define GOOD_MAGIC_CHAR		0x29F3
+
+#define ROUGH_WALL_CHAR         WALL_CHAR
+#define CARPET_CHAR             FLOOR_CHAR
+#define IRON_DOOR_CHAR          DOOR_CHAR
+#define OPEN_IRON_DOOR_CHAR     OPEN_DOOR_CHAR
+#define TORCH_CHAR              WALL_CHAR
+#define CRYSTAL_CHAR            WALL_CHAR
+#define PORTCULLIS_CHAR         WALL_CHAR
+#define DRY_BARRICADE_CHAR      WALL_CHAR
+#define TORCH2_CHAR             WALL_CHAR
+#define TORCH3_CHAR             FIRE_CHAR
+#define CRACKING_STATUE_CHAR    STATUE_CHAR
+#define ALTAR1_CHAR             ALTAR_CHAR
+#define ALTAR2_CHAR             GEM_CHAR
+#define ALTAR3_CHAR             ALTAR_CHAR
+#define IRON_CAGE_CHAR          WALL_CHAR
+#define ALTAR4_CHAR             ALTAR_CHAR
+#define PEDESTAL_CHAR           ALTAR_CHAR
+#define OPEN_CAGE_CHAR          ALTAR_CHAR
+#define SEALED_COFFIN_CHAR      ALTAR_CHAR
+#define OPEN_COFFIN_CHAR        ALTAR_CHAR
+#define HOLE_CHAR               CHASM_CHAR
+#define GLYPH_CHAR              CHASM_CHAR
+#define BOG_CHAR                MUD_CHAR
+#define BRIMSTONE_CHAR          ASH_CHAR
+#define BLOOD_CHAR              FLOOR_CHAR
+#define UNICORN_POOP_CHAR       FLOOR_CHAR
+#define BURNT_CARPET_CHAR       ASH_CHAR
+#define BONE_PILE_CHAR          BONES_CHAR
+#define RUBBLE_CHAR             BONES_CHAR
+#define FILTH_CHAR              BONES_CHAR
+#define EMBERS_CHAR             ASH_CHAR
+#define SPIDERWEB_CHAR          WEB_CHAR
+#define MELTING_CRYSTAL_CHAR    WALL_CHAR
+#define STALK_CHAR              FOLIAGE_CHAR
+#define POD_CHAR                GOLD_CHAR
+
+#define GOBLIN_CASTER_CHAR      'g'
+#define OGRE_CASTER_CHAR        'O'
+#define DAR_PRIESTESS_CHAR      'd'
+#define DAR_BATTLEMAGE_CHAR     'd'
+#define PHYLACTERY_CHAR         GEM_CHAR
+#define GOBLIN_WARLORD_CHAR     'g'
+#define SPECTRAL_BLADE_CHAR     WEAPON_CHAR
+#define STONE_GUARDIAN_CHAR     STATUE_CHAR
+#define WINGED_GUARDIAN_CHAR    STATUE_CHAR
+#define PHOENIX_CHAR            'P'
+#define PHOENIX_EGG_CHAR        GEM_CHAR
+
+#endif
 
 #else
+// no unicode (very old code)
 
 #define FLOOR_CHAR		'.'
 #define LIQUID_CHAR		'~'
