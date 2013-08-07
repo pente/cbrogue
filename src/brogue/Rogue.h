@@ -2077,6 +2077,7 @@ typedef struct levelData {
 	struct creature *dormantMonsters;
     short **scentMap;
 	unsigned long levelSeed;
+        short foodSpawn[NUMBER_FOOD_KINDS];   // 0: number of rations to spawn; 1: mangos
 	short upStairsLoc[2];
 	short downStairsLoc[2];
 	short playerExitedVia[2];
@@ -2339,6 +2340,7 @@ extern "C" {
 	short randClumpedRange(short lowerBound, short upperBound, short clumpFactor);
 	short randClump(randomRange theRange);
 	boolean rand_percent(short percent);
+	short poisson(short percent);
 	void shuffleList(short *list, short listLength);
     void fillSequentialList(short *list, short listLength);
 	short unflag(unsigned long flag);

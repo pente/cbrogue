@@ -136,6 +136,37 @@ void welcome() {
 	flavorMessage("The doors to the dungeon slam shut behind you.");
 }
 
+boolean verify_food_distribution() {
+    short i, j;
+    long nutrition;
+    nutrition = 0;
+    printf("\nTrying food distribution:");
+    for (i = 0; i < DEEPEST_LEVEL + 1; i++) {
+        printf("\n    Level %i: ", i + 1);
+        for (j = 0; j < NUMBER_FOOD_KINDS; j++) {
+            nutrition += ((long) levels[i].foodSpawn[j]) * ((long) foodTable[j].strengthRequired);
+            printf(" %i", levels[i].foodSpawn[j]);
+        }
+        if ((nutrition + 900) * 4 <= (pow(((long) i) - 1, 1.3)) * 1800 * 0.52) {
+            printf("\nFailed at level %i (%i).", i + 1, nutrition);
+            return false;
+        }
+    }
+    printf("\nSuccess!");
+    return true;
+}
+
+void distribute_food() {
+    short i, j;
+    do {
+        for (i = 0; i < DEEPEST_LEVEL + 1; ++i) {
+            for (j = 0; j < NUMBER_FOOD_KINDS; ++j) {
+                levels[i].foodSpawn[j] = poisson(foodTable[j].frequency * pow((i + 30.0) / (30.0), 1.2));
+            }
+        }
+    } while (!verify_food_distribution());
+}
+
 // Seed is used as the dungeon seed unless it's zero, in which case generate a new one.
 // Either way, previousGameSeed is set to the seed we use.
 // None of this seed stuff is applicable if we're playing a recording.
@@ -251,6 +282,8 @@ void initializeRogue(unsigned long seed) {
 		levels[i].dormantMonsters = NULL;
 		levels[i].items = NULL;
 		levels[i].visited = false;
+                levels[i].foodSpawn[0] = 0;
+                levels[i].foodSpawn[1] = 0;
 		levels[i].playerExitedVia[0] = 0;
 		levels[i].playerExitedVia[1] = 0;
 		do {
@@ -263,6 +296,8 @@ void initializeRogue(unsigned long seed) {
 			levels[i+1].upStairsLoc[1] = levels[i].downStairsLoc[1];
 		}
 	}
+
+        distribute_food();
     
     // initialize the waypoints list
     for (i=0; i<MAX_WAYPOINT_COUNT; i++) {

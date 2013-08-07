@@ -456,6 +456,7 @@ void populateItems(short upstairsX, short upstairsY) {
 	short i, j, numberOfItems, numberOfGoldPiles, goldBonusProbability, x = 0, y = 0;
 	unsigned long totalHeat;
 	short theCategory, theKind;
+        short numFoods;
 	
 #ifdef AUDIT_RNG
 	char RNGmessage[100];
@@ -500,6 +501,11 @@ void populateItems(short upstairsX, short upstairsY) {
 			}
 		}
 	}
+
+        numFoods = 0;
+        for (i = 0; i < NUMBER_FOOD_KINDS; i++) {
+            numFoods += levels[rogue.depthLevel - 1].foodSpawn[i];
+        }
 	
 	for (i=0; i<DCOLS; i++) {
 		for (j=0; j<DROWS; j++) {
@@ -551,30 +557,37 @@ void populateItems(short upstairsX, short upstairsY) {
 		temporaryMessage("Item spawn heat map:", true);
 	}
 	
-	for (i=0; i<numberOfItems; i++) {
-		theCategory = ALL_ITEMS & ~GOLD; // gold is placed separately, below, so it's not a punishment
-		theKind = -1;
-		
-		scrollTable[SCROLL_ENCHANTING].frequency = rogue.enchantScrollFrequency;
-		potionTable[POTION_STRENGTH].frequency = rogue.strengthPotionFrequency;
+    for (i=0; i<numberOfItems; i++) {
+        theCategory = ALL_ITEMS & (~GOLD) & (~FOOD); // gold and food are placed separately, below, so it's not a punishment
+        theKind = -1;
+
+        scrollTable[SCROLL_ENCHANTING].frequency = rogue.enchantScrollFrequency;
+        potionTable[POTION_STRENGTH].frequency = rogue.strengthPotionFrequency;
         potionTable[POTION_LIFE].frequency = rogue.lifePotionFrequency;
-		
-		// Adjust the desired item category if necessary.
-		if ((rogue.foodSpawned + foodTable[RATION].strengthRequired / 2) * 4
-			<= pow(rogue.depthLevel, 1.3) * foodTable[RATION].strengthRequired * 0.45) {
-			// Guarantee a certain nutrition minimum of the approximate equivalent of one ration every four levels,
-			// with more food on deeper levels since they generally take more turns to complete.
-			theCategory = FOOD;
-			if (rogue.depthLevel > AMULET_LEVEL) {
-				numberOfItems++; // Food isn't at the expense of gems.
-			}
-		} else if (rogue.depthLevel > AMULET_LEVEL) {
-			theCategory = GEM;
-		} else if (rogue.lifePotionsSpawned * 4 + 3 < rogue.depthLevel) {
+
+        // Adjust the desired item category if necessary.
+        // if ((rogue.foodSpawned + foodTable[RATION].strengthRequired / 2) * 4
+            // <= pow(rogue.depthLevel, 1.3) * foodTable[RATION].strengthRequired * 0.45) {
+            // Guarantee a certain nutrition minimum of the approximate equivalent of one ration every four levels,
+            // with more food on deeper levels since they generally take more turns to complete.
+        if (i < numFoods) {
+            theCategory = FOOD;
+            j = i;
+            theKind = 0;
+            while (levels[rogue.depthLevel - 1].foodSpawn[theKind] <= j) {
+                j -= levels[rogue.depthLevel - 1].foodSpawn[theKind];
+                theKind += 1;
+            }
+            if (rogue.depthLevel > AMULET_LEVEL) {
+                numberOfItems++; // Food isn't at the expense of gems.
+            }
+        } else if (rogue.depthLevel > AMULET_LEVEL) {
+            theCategory = GEM;
+        } else if (rogue.lifePotionsSpawned * 4 + 3 < rogue.depthLevel) {
             theCategory = POTION;
             theKind = POTION_LIFE;
         }
-		
+
 		// Generate the item.
 		theItem = generateItem(theCategory, theKind);
 		

@@ -61,6 +61,15 @@ boolean rand_percent(short percent) {
 	return (rand_range(0, 99) < clamp(percent, 0, 100));
 }
 
+short poisson(short percent) {
+    short i;
+    if (percent > 99) {
+        return 100; // Should be infinity...
+    }
+    for (i = 0; rand_percent(percent); i++);
+    return i;
+}
+
 void shuffleList(short *list, short listLength) {
 	short i, r, buf;
 	for (i=0; i<listLength; i++) {
