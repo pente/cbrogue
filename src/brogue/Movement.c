@@ -3740,7 +3740,7 @@ void playerTurnEnded() {
         } else {
             rogue.scentTurnNumber += 3; // this must happen per subjective player time
         }
-		if (rogue.scentTurnNumber > 20000) {
+		if (rogue.scentTurnNumber > 25000) {
 			resetScentTurnNumber();
 		}
 		

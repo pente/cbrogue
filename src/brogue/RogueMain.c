@@ -913,6 +913,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
             }
         }
 	}
+        rogue.inWater = false;
 	if (cellHasTerrainFlag(player.xLoc, player.yLoc, T_IS_DEEP_WATER) && !player.status[STATUS_LEVITATING]
 		&& !cellHasTerrainFlag(player.xLoc, player.yLoc, (T_ENTANGLES | T_OBSTRUCTS_PASSABILITY))) {
 		rogue.inWater = true;

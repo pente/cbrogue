@@ -2441,7 +2441,7 @@ boolean isLocalScentMaximum(short x, short y) {
             return false;
         }
     }
-    return false;
+    return true;
 }
 
 // Returns the direction the player's scent points to from a given cell. Returns -1 if the nose comes up blank.
