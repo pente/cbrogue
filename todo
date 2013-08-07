@@ -1,0 +1,24 @@
+To be implemented:
+
+* Monsters struck by force deal damage to monsters they hit.
+* Fix negation of explosive mutants.
+* Fix display of negated/polymorphed mutants.
+
+Not to be implemented because it is too difficult:
+
+* Lots of bug fixes.
+* Multiplayer support.
+
+To be considered for implementation:
+
+* Scoring based only on gold, amulet, and lumenstones.
+* Replace gold with number of explored tiles (weighted by depth).
+* Record seeds of all entries in high scores table.
+* "wand of sleep"
+* Make beckoning a staff, but no action on monsters on cages.
+* Add randomized monster hordes at deep levels.
+* Command to highlight unvisited squares/items on the level.
+* Can view all observed items (including on other levels?)
+* Recall previous dungeon levels.
+* Protection scrolls can be applied to any item in inventory.
+* Keep track of player conducts and/or player statistics.
