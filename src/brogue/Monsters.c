@@ -1593,10 +1593,16 @@ void decrementMonsterStatus(creature *monst) {
                 }
                 break;
             case STATUS_MAGICAL_FEAR:
-            case STATUS_DISCORDANT:
                 if (monst->status[i]) {
                     if (!--monst->status[i]) {
                         monst->creatureState = (monst->leader == &player ? MONSTER_ALLY : MONSTER_TRACKING_SCENT);
+                    }
+                }
+                break;
+            case STATUS_DISCORDANT:
+                if (monst->status[i]) {
+                    if (!(--monst->status[i]) && (monst->leader == &player)) {
+                        monst->creatureState = MONSTER_ALLY;
                     }
                 }
                 break;
