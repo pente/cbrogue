@@ -3248,6 +3248,7 @@ void monsterEntersLevel(creature *monst, short n) {
     monst->status[STATUS_ENTERS_LEVEL_IN] = 0;
     monst->bookkeepingFlags |= MONST_PREPLACED;
     monst->bookkeepingFlags &= ~MONST_IS_FALLING;
+    monst->targetCorpseLoc[0] = monst->targetCorpseLoc[1] = 0;
     restoreMonster(monst, NULL, NULL);
     //DEBUG printf("\nPlaced a creature (%s) at (%i, %i).", monst->info.monsterName, monst->xLoc, monst->yLoc);
     monst->ticksUntilTurn = monst->movementSpeed;
