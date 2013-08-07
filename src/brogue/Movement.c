@@ -1440,7 +1440,7 @@ boolean playerMoves(short direction) {
 				pmap[defender->xLoc][defender->yLoc].flags &= ~HAS_MONSTER;
                 defender->xLoc = x;
 				defender->yLoc = y;
-                if (monsterAvoids(defender, x, y)) {
+                if (monsterAvoids(defender, x, y) && !monsterAvoids(defender, player.xLoc, player.yLoc)) {
                     getQualifyingPathLocNear(&(defender->xLoc), &(defender->yLoc), player.xLoc, player.yLoc, true, forbiddenFlagsForMonster(&(defender->info)), 0, 0, (HAS_PLAYER | HAS_MONSTER | HAS_STAIRS), false);
                 }
                 //getQualifyingLocNear(loc, player.xLoc, player.yLoc, true, NULL, forbiddenFlagsForMonster(&(defender->info)) & ~(T_IS_DF_TRAP | T_IS_DEEP_WATER | T_SPONTANEOUSLY_IGNITES), HAS_MONSTER, false, false);
