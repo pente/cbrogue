@@ -462,12 +462,17 @@ void populateItems(short upstairsX, short upstairsY) {
 	char RNGmessage[100];
 #endif
 	
+        numFoods = 0;
+        for (i = 0; i < NUMBER_FOOD_KINDS; i++) {
+            numFoods += levels[rogue.depthLevel - 1].foodSpawn[i];
+        }
+
 	if (rogue.depthLevel > AMULET_LEVEL) {
         if (rogue.depthLevel - AMULET_LEVEL - 1 >= 8) {
-            numberOfItems = 1;
+            numberOfItems = 1 + numFoods;
         } else {
             const short lumenstoneDistribution[8] = {3, 3, 3, 2, 2, 2, 2, 2};
-            numberOfItems = lumenstoneDistribution[rogue.depthLevel - AMULET_LEVEL - 1];
+            numberOfItems = lumenstoneDistribution[rogue.depthLevel - AMULET_LEVEL - 1] + numFoods;
         }
 		numberOfGoldPiles = 0;
 	} else {
@@ -483,6 +488,9 @@ void populateItems(short upstairsX, short upstairsY) {
 		} else if (rogue.depthLevel <= 5) {
 			numberOfItems++; // and 2 more here
 		}
+                if (numberOfItems < numFoods) {
+                    numberOfItems = numFoods;
+                }
 
 		numberOfGoldPiles = min(5, (int) (rogue.depthLevel / 4 + FLOAT_FUDGE));
 		for (goldBonusProbability = 60;
@@ -501,11 +509,6 @@ void populateItems(short upstairsX, short upstairsY) {
 			}
 		}
 	}
-
-        numFoods = 0;
-        for (i = 0; i < NUMBER_FOOD_KINDS; i++) {
-            numFoods += levels[rogue.depthLevel - 1].foodSpawn[i];
-        }
 	
 	for (i=0; i<DCOLS; i++) {
 		for (j=0; j<DROWS; j++) {
@@ -577,9 +580,6 @@ void populateItems(short upstairsX, short upstairsY) {
             while (levels[rogue.depthLevel - 1].foodSpawn[theKind] <= j) {
                 j -= levels[rogue.depthLevel - 1].foodSpawn[theKind];
                 theKind += 1;
-            }
-            if (rogue.depthLevel > AMULET_LEVEL) {
-                numberOfItems++; // Food isn't at the expense of gems.
             }
         } else if (rogue.depthLevel > AMULET_LEVEL) {
             theCategory = GEM;

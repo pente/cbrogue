@@ -140,19 +140,24 @@ boolean verify_food_distribution() {
     short i, j;
     long nutrition;
     nutrition = 0;
-    printf("\nTrying food distribution:");
+    // printf("\nTrying food distribution:");
+    // printf("\n");
     for (i = 0; i < DEEPEST_LEVEL + 1; i++) {
-        printf("\n    Level %i: ", i + 1);
+        // printf("\n    Level %i: ", i + 1);
         for (j = 0; j < NUMBER_FOOD_KINDS; j++) {
             nutrition += ((long) levels[i].foodSpawn[j]) * ((long) foodTable[j].strengthRequired);
-            printf(" %i", levels[i].foodSpawn[j]);
+            // printf(" %i", levels[i].foodSpawn[j]);
         }
-        if ((nutrition + 900) * 4 <= (pow(((long) i) - 1, 1.3)) * 1800 * 0.52) {
-            printf("\nFailed at level %i (%i).", i + 1, nutrition);
+        if (nutrition + 1800 <= (pow(((long) i) + 1, 1.3)) * 1800 * 0.13) {
+            // printf("\nToo little food at level %i (%i).", i + 1, nutrition);
+            return false;
+        }
+        if ((i < AMULET_LEVEL - 1) && (nutrition - 5400 >= (pow(((long) i) + 1, 1.3)) * 1800 * 0.13)) {
+            // printf("\nToo much food at level %i (%i).", i + 1, nutrition);
             return false;
         }
     }
-    printf("\nSuccess!");
+    // printf("\nSuccess!");
     return true;
 }
 
