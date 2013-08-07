@@ -2748,7 +2748,8 @@ void monstersTurn(creature *monst) {
 	if (monst->corpseAbsorptionCounter) {
 		if (monst->xLoc == monst->targetCorpseLoc[0]
 			&& monst->yLoc == monst->targetCorpseLoc[1]
-			&& (monst->bookkeepingFlags & MONST_ABSORBING)) {
+			&& (monst->bookkeepingFlags & MONST_ABSORBING)
+                        && !(monst->status[STATUS_DISCORDANT])) {
 			if (!--monst->corpseAbsorptionCounter) {
 				monst->targetCorpseLoc[0] = monst->targetCorpseLoc[1] = 0;
 				if (monst->absorbBehavior) {
