@@ -3896,7 +3896,7 @@ void playerTurnEnded() {
 			for (monst = monsters->nextCreature; (monst != NULL) && (rogue.gameHasEnded == false); monst = monst->nextCreature) {
 				if (monst->ticksUntilTurn <= 0) {
                     if (monst->currentHP > monst->info.maxHP) {
-                        monst->info.currentHP = monst->maxHP;
+                        monst->currentHP = monst->info.maxHP;
                     }
 					
                     if ((monst->info.flags & MONST_GETS_TURN_ON_ACTIVATION)

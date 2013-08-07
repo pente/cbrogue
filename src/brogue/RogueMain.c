@@ -818,6 +818,12 @@ void startLevel(short oldLevelNumber, short stairDirection) {
 	
     if (!levels[rogue.depthLevel-1].visited) {
         levels[rogue.depthLevel-1].visited = true;
+        for (theItem = floorItems->nextItem; theItem != NULL; theItem = theItem->nextItem) {
+            if (theItem->category & FOOD) {
+                messageWithColor("The smell of something delicious wafts in the air.", &itemMessageColor, false);
+                break;
+            }
+        }
         if (rogue.depthLevel == AMULET_LEVEL) {
             messageWithColor("An alien energy permeates the area. The Amulet of Yendor must be nearby!", &itemMessageColor, false);
         } else if (rogue.depthLevel == DEEPEST_LEVEL) {
