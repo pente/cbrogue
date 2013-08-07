@@ -20,14 +20,6 @@ Updating your development environment
 
         git pull origin tcod
 
-* To checkout a specific version of the code to your working tree:
-
-        git checkout <version>
-
-* To restore your working tree to the newest version:
-
-        git checkout tcod
-
 Contributing edits
 ------------------
 * Create a github account and set up your user name and email.
